@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import type { ReservationData, User } from './types';
 import { ReservationForm } from './components/ReservationForm';
 import { ConfirmationScreen } from './components/ConfirmationScreen';
@@ -15,15 +15,36 @@ const LogoutIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" })
   </svg>
 );
 
+const USERS_STORAGE_KEY = 'figueiras_users';
+const RESERVATIONS_STORAGE_KEY = 'figueiras_reservations';
+
 
 const App: React.FC = () => {
   const [view, setView] = useState<'login' | 'register' | 'app'>('login');
   const [loginMessage, setLoginMessage] = useState<string | null>(null);
 
-  const [users, setUsers] = useState<User[]>([
-    { username: 'admin', password: 'figueiras2024', name: 'Admin', establishment: 'Bar Figueiras' }
-  ]);
+  const [users, setUsers] = useState<User[]>(() => {
+    try {
+      const storedUsers = window.localStorage.getItem(USERS_STORAGE_KEY);
+      if (storedUsers) {
+        return JSON.parse(storedUsers);
+      }
+    } catch (error) {
+      console.error("Error reading users from localStorage", error);
+    }
+    return [{ username: 'admin', password: 'figueiras2024', name: 'Admin', establishment: 'Bar Figueiras' }];
+  });
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  
+  const [allReservations, setAllReservations] = useState<ReservationData[]>(() => {
+    try {
+        const storedReservations = window.localStorage.getItem(RESERVATIONS_STORAGE_KEY);
+        return storedReservations ? JSON.parse(storedReservations) : [];
+    } catch (error) {
+        console.error("Error reading reservations from localStorage", error);
+        return [];
+    }
+  });
 
   const [reservationData, setReservationData] = useState<ReservationData | null>(null);
   const [reservationsList, setReservationsList] = useState<ReservationData[]>([]);
@@ -32,6 +53,30 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [activeView, setActiveView] = useState<'reservas' | 'contratos' | 'minhasReservas'>('reservas');
+  
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    } catch (error) {
+      console.error("Error saving users to localStorage", error);
+    }
+  }, [users]);
+
+  useEffect(() => {
+      try {
+          window.localStorage.setItem(RESERVATIONS_STORAGE_KEY, JSON.stringify(allReservations));
+      } catch (error) {
+          console.error("Error saving reservations to localStorage", error);
+      }
+  }, [allReservations]);
+  
+  useEffect(() => {
+    if (currentUser) {
+        setReservationsList(allReservations.filter(r => r.username === currentUser.username));
+    } else {
+        setReservationsList([]);
+    }
+  }, [currentUser, allReservations]);
 
   const handleLogin = useCallback((user: string, pass: string): boolean => {
     const foundUser = users.find(u => u.username === user && u.password === pass);
@@ -54,29 +99,44 @@ const App: React.FC = () => {
     return { success: true, message: 'Usuário cadastrado com sucesso!' };
   }, [users]);
 
+  const handleReset = useCallback(() => {
+    setReservationData(null);
+    setSuggestion(null);
+    setIsLoading(false);
+    setError(null);
+    setIsSubmitted(false);
+  }, []);
+
   const handleLogout = useCallback(() => {
     setCurrentUser(null);
     setView('login');
     setLoginMessage(null);
-    // Reset state when logging out
     handleReset();
-    setReservationsList([]);
     setActiveView('reservas');
-  }, []);
+  }, [handleReset]);
 
-  const handleReservationSubmit = useCallback(async (data: Omit<ReservationData, 'id'>) => {
+  const handleReservationSubmit = useCallback(async (data: Omit<ReservationData, 'id' | 'username'>) => {
+    if (!currentUser) {
+        setError("Erro: Nenhum usuário logado para criar uma reserva.");
+        return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     const isEditing = !!reservationData;
-    const newReservation: ReservationData = { ...data, id: isEditing ? reservationData.id : Date.now() };
+    const newReservation: ReservationData = { 
+      ...data, 
+      id: isEditing ? reservationData.id : Date.now(),
+      username: currentUser.username
+    };
 
     setReservationData(newReservation);
 
     if (isEditing) {
-      setReservationsList(prevList => prevList.map(res => res.id === newReservation.id ? newReservation : res));
+      setAllReservations(prevList => prevList.map(res => res.id === newReservation.id ? newReservation : res));
     } else {
-      setReservationsList(prevList => [...prevList, newReservation]);
+      setAllReservations(prevList => [...prevList, newReservation]);
     }
 
     setIsSubmitted(true);
@@ -90,19 +150,11 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [reservationData]);
-
-  const handleReset = useCallback(() => {
-    setReservationData(null);
-    setSuggestion(null);
-    setIsLoading(false);
-    setError(null);
-    setIsSubmitted(false);
-  }, []);
+  }, [reservationData, currentUser]);
 
   const handleCancelReservation = useCallback(() => {
     if (reservationData) {
-      setReservationsList(prevList => prevList.filter(res => res.id !== reservationData.id));
+      setAllReservations(prevList => prevList.filter(res => res.id !== reservationData.id));
     }
     handleReset();
   }, [reservationData, handleReset]);

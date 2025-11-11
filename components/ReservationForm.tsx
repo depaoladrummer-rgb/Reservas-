@@ -8,7 +8,7 @@ import { PhoneIcon } from './icons/PhoneIcon';
 import { UserIcon } from './icons/UserIcon';
 
 interface ReservationFormProps {
-  onSubmit: (data: Omit<ReservationData, 'id'>) => void;
+  onSubmit: (data: Omit<ReservationData, 'id' | 'username'>) => void;
   isLoading: boolean;
   initialData?: ReservationData | null;
 }

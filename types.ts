@@ -1,5 +1,6 @@
 export interface ReservationData {
   id: number;
+  username: string;
   name: string;
   phone: string;
   guests: number;

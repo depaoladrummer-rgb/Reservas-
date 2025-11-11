@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { UserIcon } from './icons/UserIcon';
 import { LockClosedIcon } from './icons/LockClosedIcon';
+import { EyeIcon } from './icons/EyeIcon';
+import { EyeSlashIcon } from './icons/EyeSlashIcon';
 
 interface LoginScreenProps {
   onLogin: (user: string, pass: string) => boolean;
@@ -12,6 +14,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onSwitchToReg
   const [user, setUser] = useState('');
   const [pass, setPass] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLoginAttempt = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,14 +60,22 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onSwitchToReg
                 <LockClosedIcon className="h-5 w-5 text-gray-400" />
               </span>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
-                className="w-full bg-gray-800/50 border border-gray-600 text-white rounded-lg pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
+                className="w-full bg-gray-800/50 border border-gray-600 text-white rounded-lg pl-10 pr-10 py-2.5 focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
                 placeholder="Digite sua senha"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+              </button>
             </div>
           </div>
           
