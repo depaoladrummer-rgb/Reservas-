@@ -14,13 +14,18 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ onRegist
   const [establishment, setEstablishment] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!name || !establishment || !username || !password) {
+    if (!name || !establishment || !username || !password || !confirmPassword) {
       setError('Todos os campos são obrigatórios.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem.');
       return;
     }
     const result = onRegister({ name, establishment, username }, password);
@@ -101,6 +106,23 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ onRegist
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-gray-800/50 border border-gray-600 text-white rounded-lg pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
                 placeholder="Crie uma senha forte"
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">Confirmar Senha</label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <LockClosedIcon className="h-5 w-5 text-gray-400" />
+              </span>
+              <input
+                type="password"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full bg-gray-800/50 border border-gray-600 text-white rounded-lg pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
+                placeholder="Confirme sua senha"
                 required
               />
             </div>

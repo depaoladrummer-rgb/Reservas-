@@ -17,13 +17,13 @@ const LogoutIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" })
 
 
 const App: React.FC = () => {
-  const [view, setView] = useState<'login' | 'register' | 'app'>('app');
+  const [view, setView] = useState<'login' | 'register' | 'app'>('login');
   const [loginMessage, setLoginMessage] = useState<string | null>(null);
 
   const [users, setUsers] = useState<User[]>([
     { username: 'admin', password: 'figueiras2024', name: 'Admin', establishment: 'Bar Figueiras' }
   ]);
-  const [currentUser, setCurrentUser] = useState<User | null>({ username: 'dev', password: 'dev', name: 'Desenvolvedor', establishment: 'Bar Figueiras' });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const [reservationData, setReservationData] = useState<ReservationData | null>(null);
   const [reservationsList, setReservationsList] = useState<ReservationData[]>([]);
