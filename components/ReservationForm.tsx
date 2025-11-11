@@ -10,18 +10,20 @@ import { UserIcon } from './icons/UserIcon';
 interface ReservationFormProps {
   onSubmit: (data: Omit<ReservationData, 'id'>) => void;
   isLoading: boolean;
+  initialData?: ReservationData | null;
 }
 
-export const ReservationForm: React.FC<ReservationFormProps> = ({ onSubmit, isLoading }) => {
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [guests, setGuests] = useState(2);
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [occasion, setOccasion] = useState('aniversário');
-  const [eventType, setEventType] = useState('Comum');
+export const ReservationForm: React.FC<ReservationFormProps> = ({ onSubmit, isLoading, initialData }) => {
+  const [name, setName] = useState(initialData?.name || '');
+  const [phone, setPhone] = useState(initialData?.phone || '');
+  const [guests, setGuests] = useState(initialData?.guests || 2);
+  const [date, setDate] = useState(initialData?.date || '');
+  const [time, setTime] = useState(initialData?.time || '');
+  const [occasion, setOccasion] = useState(initialData?.occasion || 'aniversário');
+  const [eventType, setEventType] = useState(initialData?.eventType || 'Comum');
   
   const isFormValid = name && phone && guests > 0 && date && time && occasion;
+  const isEditing = !!initialData;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,7 +174,7 @@ export const ReservationForm: React.FC<ReservationFormProps> = ({ onSubmit, isLo
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           ) : null}
-          {isLoading ? 'Gerando Sugestão...' : 'Ver Sugestão de Evento'}
+          {isLoading ? (isEditing ? 'Atualizando...' : 'Gerando Sugestão...') : (isEditing ? 'Atualizar Reserva' : 'Ver Sugestão de Evento')}
         </button>
       </form>
     </div>

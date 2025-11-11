@@ -3,6 +3,8 @@ import type { User } from '../types';
 import { UserIcon } from './icons/UserIcon';
 import { LockClosedIcon } from './icons/LockClosedIcon';
 import { BuildingOfficeIcon } from './icons/BuildingOfficeIcon';
+import { EyeIcon } from './icons/EyeIcon';
+import { EyeSlashIcon } from './icons/EyeSlashIcon';
 
 interface RegistrationScreenProps {
   onRegister: (newUser: Omit<User, 'password'>, password: string) => { success: boolean, message: string };
@@ -16,6 +18,8 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ onRegist
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,14 +104,22 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ onRegist
                 <LockClosedIcon className="h-5 w-5 text-gray-400" />
               </span>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-gray-800/50 border border-gray-600 text-white rounded-lg pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
+                className="w-full bg-gray-800/50 border border-gray-600 text-white rounded-lg pl-10 pr-10 py-2.5 focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
                 placeholder="Crie uma senha forte"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+              </button>
             </div>
           </div>
           <div>
@@ -117,14 +129,22 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ onRegist
                 <LockClosedIcon className="h-5 w-5 text-gray-400" />
               </span>
               <input
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-gray-800/50 border border-gray-600 text-white rounded-lg pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
+                className="w-full bg-gray-800/50 border border-gray-600 text-white rounded-lg pl-10 pr-10 py-2.5 focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
                 placeholder="Confirme sua senha"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white"
+                aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+              </button>
             </div>
           </div>
           

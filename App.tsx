@@ -67,9 +67,18 @@ const App: React.FC = () => {
   const handleReservationSubmit = useCallback(async (data: Omit<ReservationData, 'id'>) => {
     setIsLoading(true);
     setError(null);
-    const newReservation: ReservationData = { ...data, id: Date.now() };
+
+    const isEditing = !!reservationData;
+    const newReservation: ReservationData = { ...data, id: isEditing ? reservationData.id : Date.now() };
+
     setReservationData(newReservation);
-    setReservationsList(prevList => [...prevList, newReservation]);
+
+    if (isEditing) {
+      setReservationsList(prevList => prevList.map(res => res.id === newReservation.id ? newReservation : res));
+    } else {
+      setReservationsList(prevList => [...prevList, newReservation]);
+    }
+
     setIsSubmitted(true);
 
     try {
@@ -81,7 +90,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [reservationData]);
 
   const handleReset = useCallback(() => {
     setReservationData(null);
@@ -97,6 +106,11 @@ const App: React.FC = () => {
     }
     handleReset();
   }, [reservationData, handleReset]);
+  
+  const handleEditReservation = useCallback(() => {
+    setIsSubmitted(false);
+    setSuggestion(null);
+  }, []);
 
   const navButtonClasses = (view: 'reservas' | 'contratos' | 'minhasReservas') => 
     `px-4 md:px-6 py-2 rounded-md text-base md:text-lg font-semibold transition-colors duration-300 ${
@@ -147,7 +161,11 @@ const App: React.FC = () => {
         {activeView === 'reservas' && (
           <>
             {!isSubmitted ? (
-              <ReservationForm onSubmit={handleReservationSubmit} isLoading={isLoading} />
+              <ReservationForm
+                onSubmit={handleReservationSubmit}
+                isLoading={isLoading}
+                initialData={reservationData}
+              />
             ) : (
               reservationData && (
                 <ConfirmationScreen
@@ -157,6 +175,7 @@ const App: React.FC = () => {
                   error={error}
                   onReset={handleReset}
                   onCancel={handleCancelReservation}
+                  onEdit={handleEditReservation}
                 />
               )
             )}
