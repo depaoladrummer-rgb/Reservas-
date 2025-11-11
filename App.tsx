@@ -72,7 +72,11 @@ const App: React.FC = () => {
   
   useEffect(() => {
     if (currentUser) {
-        setReservationsList(allReservations.filter(r => r.username === currentUser.username));
+        if (currentUser.username === 'admin') {
+            setReservationsList(allReservations);
+        } else {
+            setReservationsList(allReservations.filter(r => r.username === currentUser.username));
+        }
     } else {
         setReservationsList([]);
     }
@@ -83,6 +87,12 @@ const App: React.FC = () => {
     if (foundUser) {
       setCurrentUser(foundUser);
       setView('app');
+      // Set default activeView based on role
+      if (foundUser.username === 'admin') {
+          setActiveView('minhasReservas'); // For admin, this view shows all reservations
+      } else {
+          setActiveView('reservas'); // For client, default to new reservation
+      }
       return true;
     }
     return false;
@@ -170,14 +180,20 @@ const App: React.FC = () => {
         ? 'bg-orange-500 text-white shadow-lg' 
         : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/70'
     }`;
-  
+
   if (view === 'login') {
-    return <LoginScreen onLogin={handleLogin} onSwitchToRegister={() => { setView('register'); setLoginMessage(null); }} message={loginMessage} />;
+    return <LoginScreen 
+              onLogin={handleLogin} 
+              onSwitchToRegister={() => { setView('register'); setLoginMessage(null); }} 
+              message={loginMessage}
+            />;
   }
 
   if (view === 'register') {
     return <RegistrationScreen onRegister={handleRegister} onSwitchToLogin={() => setView('login')} />;
   }
+  
+  const isAdmin = currentUser?.username === 'admin';
 
   return (
     <main className="bg-black text-white min-h-screen flex flex-col items-center p-4 relative overflow-hidden">
@@ -186,7 +202,9 @@ const App: React.FC = () => {
       <header className="relative z-10 w-full max-w-6xl flex justify-between items-center mb-8 animate-fade-in-down">
           <div className="text-left">
             <h1 className="text-2xl md:text-3xl font-bold text-orange-400">Bar Figueiras</h1>
-            <p className="text-gray-400 text-sm">Usuário: {currentUser?.name}</p>
+            <p className="text-gray-400 text-sm">
+              {isAdmin ? 'Painel do Administrador' : `Usuário: ${currentUser?.name}`}
+            </p>
           </div>
           <button onClick={handleLogout} className="flex items-center space-x-2 bg-red-600/80 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-300">
             <LogoutIcon />
@@ -196,46 +214,68 @@ const App: React.FC = () => {
       
       <div className="relative z-10 flex flex-col items-center justify-center w-full">
         <nav className="flex space-x-2 md:space-x-4 mb-8">
-          <button onClick={() => {
-            if (isSubmitted) handleReset();
-            setActiveView('reservas');
-           }} className={navButtonClasses('reservas')}>
-            Nova Reserva
-          </button>
-          <button onClick={() => setActiveView('minhasReservas')} className={navButtonClasses('minhasReservas')}>
-            Minhas Reservas
-          </button>
-          <button onClick={() => setActiveView('contratos')} className={navButtonClasses('contratos')}>
-            Contratos
-          </button>
+          {isAdmin ? (
+            <>
+              <button onClick={() => setActiveView('minhasReservas')} className={navButtonClasses('minhasReservas')}>
+                  Todas as Reservas
+              </button>
+              <button onClick={() => setActiveView('contratos')} className={navButtonClasses('contratos')}>
+                  Contratos
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => {
+                if (isSubmitted) handleReset();
+                setActiveView('reservas');
+               }} className={navButtonClasses('reservas')}>
+                Nova Reserva
+              </button>
+              <button onClick={() => setActiveView('minhasReservas')} className={navButtonClasses('minhasReservas')}>
+                Minhas Reservas
+              </button>
+              <button onClick={() => setActiveView('contratos')} className={navButtonClasses('contratos')}>
+                Contratos
+              </button>
+            </>
+          )}
         </nav>
-
-        {activeView === 'reservas' && (
+        
+        {isAdmin ? (
           <>
-            {!isSubmitted ? (
-              <ReservationForm
-                onSubmit={handleReservationSubmit}
-                isLoading={isLoading}
-                initialData={reservationData}
-              />
-            ) : (
-              reservationData && (
-                <ConfirmationScreen
-                  reservationData={reservationData}
-                  suggestion={suggestion}
-                  isLoading={isLoading}
-                  error={error}
-                  onReset={handleReset}
-                  onCancel={handleCancelReservation}
-                  onEdit={handleEditReservation}
-                />
-              )
+            {activeView === 'minhasReservas' && <ReservationsListView reservations={reservationsList} isAdmin={true} />}
+            {activeView === 'contratos' && <ContractsView reservations={reservationsList} />}
+          </>
+        ) : (
+          <>
+            {activeView === 'reservas' && (
+              <>
+                {!isSubmitted ? (
+                  <ReservationForm
+                    onSubmit={handleReservationSubmit}
+                    isLoading={isLoading}
+                    initialData={reservationData}
+                  />
+                ) : (
+                  reservationData && (
+                    <ConfirmationScreen
+                      reservationData={reservationData}
+                      suggestion={suggestion}
+                      isLoading={isLoading}
+                      error={error}
+                      onReset={handleReset}
+                      onCancel={handleCancelReservation}
+                      onEdit={handleEditReservation}
+                    />
+                  )
+                )}
+              </>
             )}
+            
+            {activeView === 'minhasReservas' && <ReservationsListView reservations={reservationsList} isAdmin={false}/>}
+            {activeView === 'contratos' && <ContractsView reservations={reservationsList} />}
           </>
         )}
-        
-        {activeView === 'minhasReservas' && <ReservationsListView reservations={reservationsList} />}
-        {activeView === 'contratos' && <ContractsView reservations={reservationsList} />}
       </div>
     </main>
   );

@@ -25,12 +25,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onSwitchToReg
     }
   };
 
+  const title = "Acesso ao Sistema";
+
   return (
-    <main className="bg-black text-white min-h-screen flex flex-col items-center justify-center p-4">
+    <main className="bg-black text-white min-h-screen flex flex-col items-center justify-center p-4 relative">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10 animate-fade-in-down">
           <h1 className="text-4xl md:text-5xl font-bold text-orange-400">Bar Figueiras</h1>
-          <p className="text-gray-300 mt-2 text-lg">Acesso ao Sistema de Reservas</p>
+          <p className="text-gray-300 mt-2 text-lg">{title}</p>
         </div>
         <form onSubmit={handleLoginAttempt} className="space-y-6 bg-gray-900/50 p-8 rounded-xl shadow-2xl border border-gray-700 animate-fade-in-up">
           {message && (
@@ -91,7 +93,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onSwitchToReg
             Entrar
           </button>
         </form>
-         <p className="text-center text-sm text-gray-400 mt-6">
+        <p className="text-center text-sm text-gray-400 mt-6">
           Não tem uma conta?{' '}
           <button onClick={onSwitchToRegister} className="font-semibold text-orange-400 hover:text-orange-300">
             Cadastre-se
