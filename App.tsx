@@ -16,7 +16,7 @@ const LogoutIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" })
 );
 
 const USERS_STORAGE_KEY = 'figueiras_users';
-const RESERVATIONS_STORAGE_KEY = 'figueiras_reservations';
+const getReservationsStorageKey = (username: string) => `figueiras_reservations_${username}`;
 
 
 const App: React.FC = () => {
@@ -36,18 +36,10 @@ const App: React.FC = () => {
   });
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   
-  const [allReservations, setAllReservations] = useState<ReservationData[]>(() => {
-    try {
-        const storedReservations = window.localStorage.getItem(RESERVATIONS_STORAGE_KEY);
-        return storedReservations ? JSON.parse(storedReservations) : [];
-    } catch (error) {
-        console.error("Error reading reservations from localStorage", error);
-        return [];
-    }
-  });
+  // This state holds reservations for the current user, or all reservations if admin.
+  const [reservations, setReservations] = useState<ReservationData[]>([]);
 
   const [reservationData, setReservationData] = useState<ReservationData | null>(null);
-  const [reservationsList, setReservationsList] = useState<ReservationData[]>([]);
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,25 +54,66 @@ const App: React.FC = () => {
     }
   }, [users]);
 
+  // Load reservations on user change
   useEffect(() => {
-      try {
-          window.localStorage.setItem(RESERVATIONS_STORAGE_KEY, JSON.stringify(allReservations));
-      } catch (error) {
-          console.error("Error saving reservations to localStorage", error);
+    if (currentUser) {
+      if (currentUser.username === 'admin') {
+        const allUserReservations: ReservationData[] = [];
+        users.forEach(user => {
+          if (user.username !== 'admin') {
+            try {
+              const stored = window.localStorage.getItem(getReservationsStorageKey(user.username));
+              if (stored) {
+                allUserReservations.push(...JSON.parse(stored));
+              }
+            } catch (e) {
+              console.error(`Failed to load reservations for ${user.username}`, e);
+            }
+          }
+        });
+        setReservations(allUserReservations);
+      } else {
+        try {
+          const stored = window.localStorage.getItem(getReservationsStorageKey(currentUser.username));
+          setReservations(stored ? JSON.parse(stored) : []);
+        } catch (e) {
+          console.error("Failed to load reservations for current user", e);
+          setReservations([]);
+        }
       }
-  }, [allReservations]);
-  
+    } else {
+      setReservations([]);
+    }
+  }, [currentUser, users]);
+
+  // Save reservations on change
   useEffect(() => {
     if (currentUser) {
         if (currentUser.username === 'admin') {
-            setReservationsList(allReservations);
+            const reservationsByUser = reservations.reduce((acc, res) => {
+                (acc[res.username] = acc[res.username] || []).push(res);
+                return acc;
+            }, {} as Record<string, ReservationData[]>);
+
+            users.forEach(user => {
+                if (user.username !== 'admin') {
+                    const userReservations = reservationsByUser[user.username] || [];
+                    try {
+                        window.localStorage.setItem(getReservationsStorageKey(user.username), JSON.stringify(userReservations));
+                    } catch (e) {
+                        console.error(`Failed to save reservations for ${user.username}`, e);
+                    }
+                }
+            });
         } else {
-            setReservationsList(allReservations.filter(r => r.username === currentUser.username));
+            try {
+                window.localStorage.setItem(getReservationsStorageKey(currentUser.username), JSON.stringify(reservations));
+            } catch (e) {
+                console.error("Failed to save reservations for current user", e);
+            }
         }
-    } else {
-        setReservationsList([]);
     }
-  }, [currentUser, allReservations]);
+  }, [reservations, currentUser, users]);
 
   const handleLogin = useCallback((user: string, pass: string): boolean => {
     const foundUser = users.find(u => u.username === user && u.password === pass);
@@ -144,9 +177,9 @@ const App: React.FC = () => {
     setReservationData(newReservation);
 
     if (isEditing) {
-      setAllReservations(prevList => prevList.map(res => res.id === newReservation.id ? newReservation : res));
+      setReservations(prevList => prevList.map(res => res.id === newReservation.id ? newReservation : res));
     } else {
-      setAllReservations(prevList => [...prevList, newReservation]);
+      setReservations(prevList => [...prevList, newReservation]);
     }
 
     setIsSubmitted(true);
@@ -164,7 +197,7 @@ const App: React.FC = () => {
 
   const handleCancelReservation = useCallback(() => {
     if (reservationData) {
-      setAllReservations(prevList => prevList.filter(res => res.id !== reservationData.id));
+      setReservations(prevList => prevList.filter(res => res.id !== reservationData.id));
     }
     handleReset();
   }, [reservationData, handleReset]);
@@ -243,8 +276,8 @@ const App: React.FC = () => {
         
         {isAdmin ? (
           <>
-            {activeView === 'minhasReservas' && <ReservationsListView reservations={reservationsList} isAdmin={true} />}
-            {activeView === 'contratos' && <ContractsView reservations={reservationsList} />}
+            {activeView === 'minhasReservas' && <ReservationsListView reservations={reservations} isAdmin={true} />}
+            {activeView === 'contratos' && <ContractsView reservations={reservations} />}
           </>
         ) : (
           <>
@@ -272,8 +305,8 @@ const App: React.FC = () => {
               </>
             )}
             
-            {activeView === 'minhasReservas' && <ReservationsListView reservations={reservationsList} isAdmin={false}/>}
-            {activeView === 'contratos' && <ContractsView reservations={reservationsList} />}
+            {activeView === 'minhasReservas' && <ReservationsListView reservations={reservations} isAdmin={false}/>}
+            {activeView === 'contratos' && <ContractsView reservations={reservations} />}
           </>
         )}
       </div>
